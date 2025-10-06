@@ -1,0 +1,13 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# IDE / misc
+.idea/
+.history/
+
+# Artifacts
+*.zip
