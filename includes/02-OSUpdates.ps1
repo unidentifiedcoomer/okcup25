@@ -1,5 +1,5 @@
 # includes\02-OSUpdates.ps1
-# OS Updates – STUBS ONLY (no working commands included)
+# OS Updates ï¿½ STUBS ONLY (no working commands included)
 
 function Invoke-OSUpdates {
     param([hashtable]$Config)
@@ -32,7 +32,13 @@ function OSU-Enable-RecommendAndMicrosoftUpdate {
 }
 #>
     param([hashtable]$Config)
-    # TODO
+    function OSU-Enable-RecommendAndMicrosoftUpdate {
+  param([hashtable]$Config)
+  Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'IncludeRecommendedUpdates' -Value 1
+  Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'IncludeRecommendedUpdates' -Value 1
+  Write-Host "Enabled Microsoft/recommended updates."
+}
+
 }
 
 function OSU-Enable-AutomaticUpdates {
@@ -51,7 +57,12 @@ function OSU-Enable-AutomaticUpdates {
 }
 #>
     param([hashtable]$Config)
-    # TODO
+    function OSU-Enable-AutomaticUpdates {
+param([hashtable]$Config)
+Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'NoAutoUpdate' -Value 0
+Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'AUOptions' -Value 4
+Write-Host "Automatic updates enabled (AUOptions=4)."
+}
 }
 
 function OSU-Restart-WindowsUpdateService {
@@ -69,7 +80,12 @@ function OSU-Restart-WindowsUpdateService {
 }
 #>
     param([hashtable]$Config)
-    # TODO
+    function OSU-Restart-WindowsUpdateService {
+param([hashtable]$Config)
+Restart-Service -Name 'wuauserv'
+Write-Host "Restarted Windows Update service."
+}
+
 }
 
 function OSU-Ensure-WuauservAutomaticAndRunning {
@@ -89,7 +105,14 @@ function OSU-Ensure-WuauservAutomaticAndRunning {
 }
 #>
     param([hashtable]$Config)
-    # TODO
+    function OSU-Ensure-WuauservAutomaticAndRunning {
+  param([hashtable]$Config)
+  Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'AUOptions' -Value 4 -Type DWORD
+  Set-Service -Name 'wuauserv' -StartupType 'Automatic'
+  Start-Service -Name 'wuauserv'
+  Write-Host "Windows Update service set to Automatic and started."
+}
+
 }
 
 function OSU-Install-PSWindowsUpdateModule {
