@@ -157,5 +157,9 @@ function OSU-Run-WindowsUpdate {
 }
 #>
     param([hashtable]$Config)
-    # TODO
+    
+  Install-WindowsUpdate -ForceDownload -ForceInstall -Confirm:$False
+  Write-Host "Windows updates installation initiated."
 }
+
+

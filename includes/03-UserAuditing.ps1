@@ -1,5 +1,5 @@
 # includes\03-UserAuditing.ps1
-# User Auditing category – STUBS ONLY (no working commands included)
+# User Auditing category ï¿½ STUBS ONLY (no working commands included)
 
 function Invoke-UserAuditing {
     param([hashtable]$Config)
@@ -30,7 +30,16 @@ On 'y' or 'Y', disable the account. Skip well-known built-ins (Administrator/Gue
 and service/virtual accounts. Keep the implementation simple (no idempotence flags)."
 #>
     param([hashtable]$Config)
-    # TODO: Student implementation
+    $excludedUsers = @('Administrator','Guest')
+Get-LocalUser | Where-Object { $_.Enabled -eq $true -and $_.Name -notin $excludedUsers -and -not $_.Name.StartsWith('NT SERVICE\') -and -not $_.Name.StartsWith('Virtual') } | ForEach-Object {
+    $user = $_
+    $response = Read-Host "Disable $($user.Name)? [y/N]"
+    if ($response -eq 'y' -or $response -eq 'Y') {
+        Disable-LocalUser -Name $user.Name
+        Write-Host "$($user.Name) disabled."
+    }
+}
+
 }
 
 function Prompt-RemoveAdministratorsMembers {
@@ -46,7 +55,18 @@ On 'y' or 'Y', remove the member from Administrators. Handle both user and group
 Avoid removing the current logged-on user to prevent lockout."
 #>
     param([hashtable]$Config)
-    # TODO
+    $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+$admins = Get-LocalGroupMember -Group 'Administrators'
+
+foreach ($member in $admins) {
+    if ($member.Name -eq $currentUser) { continue }
+    $response = Read-Host "Remove $($member.Name)? [y/N]"
+    if ($response -eq 'y' -or $response -eq 'Y') {
+        Remove-LocalGroupMember -Group 'Administrators' -Member $member.Name
+        Write-Host "$($member.Name) removed from Administrators."
+    }
+}
+
 }
 
 function Set-AllLocalPasswordsToTempAndExpire {
@@ -61,7 +81,18 @@ and configures the account to require a password change at next logon. Skip disa
 (Administrator/Guest), and service/virtual accounts. Keep it simple and output a brief status per user."
 #>
     param([hashtable]$Config)
-    # TODO
+    $excludedUsers = @('Administrator','Guest')
+Get-LocalUser | Where-Object { $_.Enabled -eq $true -and $_.Name -notin $excludedUsers -and -not $_.Name.StartsWith('NT SERVICE\') -and -not $_.Name.StartsWith('Virtual') } | ForEach-Object {
+    $user = $_
+    try {
+        Set-LocalUser -Name $user.Name -Password (ConvertTo-SecureString $Config.TempPassword -AsPlainText -Force) -UserMayChangePassword $true
+        $user | Set-LocalUser -PasswordExpires $true
+        Write-Host "Password reset for $($user.Name), requires change at next logon."
+    } catch {
+        Write-Host "Failed to reset password for $($user.Name): $_"
+    }
+}
+
 }
 
 function Rename-BuiltinAdministrator {
@@ -77,7 +108,10 @@ Select the account by well-known RID 500 (preferred) or a robust method, then pe
 Print a one-line confirmation. Keep it short and straightforward."
 #>
     param([hashtable]$Config)
-    # TODO
+    $admin = Get-LocalUser | Where-Object { $_.SID.Value.EndsWith('-500') }
+Rename-LocalUser -Name $admin.Name -NewName $Config.AdminRename
+Write-Host "Built-in Administrator renamed to $($Config.AdminRename)."
+
 }
 
 function Rename-BuiltinGuest {
@@ -92,7 +126,10 @@ Identify the account by RID 501 (preferred) or a robust method, then rename it.
 Print a one-line confirmation. Keep it concise."
 #>
     param([hashtable]$Config)
-    # TODO
+    $guest = Get-LocalUser | Where-Object { $_.SID.Value.EndsWith('-501') }
+Rename-LocalUser -Name $guest.Name -NewName $Config.GuestRename
+Write-Host "Built-in Guest renamed to $($Config.GuestRename)."
+
 }
 
 function Remove-AllDeviceOwnersMembersNoPrompt {
