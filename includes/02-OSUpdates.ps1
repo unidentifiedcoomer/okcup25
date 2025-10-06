@@ -32,14 +32,13 @@ function OSU-Enable-RecommendAndMicrosoftUpdate {
 }
 #>
     param([hashtable]$Config)
-    function OSU-Enable-RecommendAndMicrosoftUpdate {
-  param([hashtable]$Config)
+   
   Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'IncludeRecommendedUpdates' -Value 1
   Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'IncludeRecommendedUpdates' -Value 1
   Write-Host "Enabled Microsoft/recommended updates."
 }
 
-}
+
 
 function OSU-Enable-AutomaticUpdates {
 <#
@@ -57,13 +56,12 @@ function OSU-Enable-AutomaticUpdates {
 }
 #>
     param([hashtable]$Config)
-    function OSU-Enable-AutomaticUpdates {
-param([hashtable]$Config)
+   
 Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'NoAutoUpdate' -Value 0
 Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'AUOptions' -Value 4
 Write-Host "Automatic updates enabled (AUOptions=4)."
 }
-}
+
 
 function OSU-Restart-WindowsUpdateService {
 <#
@@ -105,15 +103,14 @@ function OSU-Ensure-WuauservAutomaticAndRunning {
 }
 #>
     param([hashtable]$Config)
-    function OSU-Ensure-WuauservAutomaticAndRunning {
-  param([hashtable]$Config)
+   
   Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'AUOptions' -Value 4 -Type DWORD
   Set-Service -Name 'wuauserv' -StartupType 'Automatic'
   Start-Service -Name 'wuauserv'
   Write-Host "Windows Update service set to Automatic and started."
 }
 
-}
+
 
 function OSU-Install-PSWindowsUpdateModule {
 <#
@@ -134,8 +131,7 @@ function OSU-Install-PSWindowsUpdateModule {
 #>
     param([hashtable]$Config)
     ```powershell
-function OSU-Install-PSWindowsUpdateModule {
-  param([hashtable]$Config)
+
   Install-PackageProvider -Name NuGet -Force
   Install-Module -Name PSWindowsUpdate -Force
   Set-ExecutionPolicy RemoteSigned -Force
@@ -144,7 +140,7 @@ function OSU-Install-PSWindowsUpdateModule {
 }
 ```
 
-}
+
 
 function OSU-Run-WindowsUpdate {
 <#
