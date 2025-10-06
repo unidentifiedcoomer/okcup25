@@ -80,8 +80,8 @@ function OSU-Restart-WindowsUpdateService {
 }
 #>
     param([hashtable]$Config)
-    function OSU-Restart-WindowsUpdateService {
-param([hashtable]$Config)
+   
+
 Restart-Service -Name 'wuauserv'
 Write-Host "Restarted Windows Update service."
 }
