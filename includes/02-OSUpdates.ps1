@@ -86,7 +86,7 @@ Restart-Service -Name 'wuauserv'
 Write-Host "Restarted Windows Update service."
 }
 
-}
+
 
 function OSU-Ensure-WuauservAutomaticAndRunning {
 <#
