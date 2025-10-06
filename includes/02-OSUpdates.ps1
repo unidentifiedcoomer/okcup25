@@ -133,7 +133,17 @@ function OSU-Install-PSWindowsUpdateModule {
 }
 #>
     param([hashtable]$Config)
-    # TODO
+    ```powershell
+function OSU-Install-PSWindowsUpdateModule {
+  param([hashtable]$Config)
+  Install-PackageProvider -Name NuGet -Force
+  Install-Module -Name PSWindowsUpdate -Force
+  Set-ExecutionPolicy RemoteSigned -Force
+  Import-Module PSWindowsUpdate -Force
+  Write-Host "PSWindowsUpdate installed and imported."
+}
+```
+
 }
 
 function OSU-Run-WindowsUpdate {
