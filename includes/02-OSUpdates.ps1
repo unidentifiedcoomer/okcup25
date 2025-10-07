@@ -20,19 +20,8 @@ function OSU-Enable-RecommendAndMicrosoftUpdate {
 <#
 .EXPLANATION
 Enable receiving updates for other Microsoft products and recommended updates.
-
-.AI_PROMPT
-Return only PowerShell code (no markdown, no comments, no extra text):
-
-function OSU-Enable-RecommendAndMicrosoftUpdate {
-  param([hashtable]$Config)
-  Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'IncludeRecommendedUpdates' -Value 1
-  Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'IncludeRecommendedUpdates' -Value 1
-  Write-Host "Enabled Microsoft/recommended updates."
-}
 #>
     param([hashtable]$Config)
-   
   Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'IncludeRecommendedUpdates' -Value 1
   Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'IncludeRecommendedUpdates' -Value 1
   Write-Host "Enabled Microsoft/recommended updates."
@@ -46,17 +35,8 @@ function OSU-Enable-AutomaticUpdates {
 Ensure Windows automatically checks for updates (AUOptions=4, NoAutoUpdate=0).
 
 .AI_PROMPT
-Return only PowerShell code:
-
-function OSU-Enable-AutomaticUpdates {
-  param([hashtable]$Config)
-  Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'NoAutoUpdate' -Value 0
-  Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'AUOptions' -Value 4
-  Write-Host "Automatic updates enabled (AUOptions=4)."
-}
 #>
     param([hashtable]$Config)
-   
 Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'NoAutoUpdate' -Value 0
 Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -Name 'AUOptions' -Value 4
 Write-Host "Automatic updates enabled (AUOptions=4)."
@@ -67,15 +47,6 @@ function OSU-Restart-WindowsUpdateService {
 <#
 .EXPLANATION
 Apply policy changes by restarting Windows Update service.
-
-.AI_PROMPT
-Return only PowerShell code:
-
-function OSU-Restart-WindowsUpdateService {
-  param([hashtable]$Config)
-  Restart-Service -Name 'wuauserv'
-  Write-Host "Restarted Windows Update service."
-}
 #>
     param([hashtable]$Config)
    
@@ -90,17 +61,6 @@ function OSU-Ensure-WuauservAutomaticAndRunning {
 <#
 .EXPLANATION
 Ensure the Windows Update service is Automatic and started; set AUOptions (current user key) to 4 as given.
-
-.AI_PROMPT
-Return only PowerShell code:
-
-function OSU-Ensure-WuauservAutomaticAndRunning {
-  param([hashtable]$Config)
-  Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update' -Name 'AUOptions' -Value 4 -Type DWORD
-  Set-Service -Name 'wuauserv' -StartupType 'Automatic'
-  Start-Service -Name 'wuauserv'
-  Write-Host "Windows Update service set to Automatic and started."
-}
 #>
     param([hashtable]$Config)
    
@@ -130,8 +90,6 @@ function OSU-Install-PSWindowsUpdateModule {
 }
 #>
     param([hashtable]$Config)
-    ```powershell
-
   Install-PackageProvider -Name NuGet -Force
   Install-Module -Name PSWindowsUpdate -Force
   Set-ExecutionPolicy RemoteSigned -Force
