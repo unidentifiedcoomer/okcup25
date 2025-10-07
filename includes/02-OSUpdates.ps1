@@ -76,18 +76,6 @@ function OSU-Install-PSWindowsUpdateModule {
 <#
 .EXPLANATION
 Install NuGet provider and PSWindowsUpdate module; set execution policy (per your snippet) and import the module.
-
-.AI_PROMPT
-Return only PowerShell code:
-
-function OSU-Install-PSWindowsUpdateModule {
-  param([hashtable]$Config)
-  Install-PackageProvider -Name NuGet -Force
-  Install-Module -Name PSWindowsUpdate -Force
-  Set-ExecutionPolicy RemoteSigned -Force
-  Import-Module PSWindowsUpdate -Force
-  Write-Host "PSWindowsUpdate installed and imported."
-}
 #>
     param([hashtable]$Config)
   Install-PackageProvider -Name NuGet -Force
@@ -104,15 +92,6 @@ function OSU-Run-WindowsUpdate {
 <#
 .EXPLANATION
 Trigger installation of available updates using PSWindowsUpdate with force flags as provided.
-
-.AI_PROMPT
-Return only PowerShell code:
-
-function OSU-Run-WindowsUpdate {
-  param([hashtable]$Config)
-  Install-WindowsUpdate -ForceDownload -ForceInstall -Confirm:$False
-  Write-Host "Windows updates installation initiated."
-}
 #>
     param([hashtable]$Config)
     
