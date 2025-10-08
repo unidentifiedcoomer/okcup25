@@ -35,7 +35,14 @@ on the local machine. Keep it simple for a scripting class (no idempotence, no -
 Use a built-in tool or policy method appropriate for local policy, and emit a one-line confirmation."
 #>
     param([hashtable]$Config)
-    # TODO: Student implementation goes here
+    # Set Windows "Minimum password length" using value from $Config.MinPasswordLength
+$MinLength = $Config.MinPasswordLength
+secedit /export /cfg "$env:TEMP\secpol.cfg" > $null
+(Get-Content "$env:TEMP\secpol.cfg") -replace '^MinimumPasswordLength\s*=\s*\d+', "MinimumPasswordLength = $MinLength" |
+    Set-Content "$env:TEMP\secpol.cfg"
+secedit /configure /db "$env:TEMP\secpol.sdb" /cfg "$env:TEMP\secpol.cfg" /quiet
+Write-Host "Set minimum password length to $MinLength."
+
 }
 
 function Set-AccountPolicy-MaxPasswordAge {
@@ -48,7 +55,8 @@ Set "Maximum password age (days)" to $Config.MaxPasswordAgeDays.
 Prefer a straightforward single-line approach and print a short confirmation."
 #>
     param([hashtable]$Config)
-    # TODO
+    net accounts /maxpwage:$($Config.MaxPasswordAgeDays) | Out-Null; Write-Host "Set maximum password age to $($Config.MaxPasswordAgeDays) days."
+
 }
 
 function Set-AccountPolicy-MinPasswordAge {
@@ -61,7 +69,8 @@ Set "Minimum password age (days)" to $Config.MinPasswordAgeDays.
 Keep it minimal and print a short confirmation message."
 #>
     param([hashtable]$Config)
-    # TODO
+    net accounts /minpwage:$($Config.MinPasswordAgeDays) | Out-Null; Write-Host "Set minimum password age to $($Config.MinPasswordAgeDays) days."
+
 }
 
 function Set-AccountPolicy-PasswordHistory {
@@ -74,7 +83,8 @@ Set "Enforce password history" to remember $Config.PasswordHistorySize previous 
 After applying, print a one-line confirmation."
 #>
     param([hashtable]$Config)
-    # TODO
+    net accounts /uniquepw:$($Config.PasswordHistorySize) | Out-Null; Write-Host "Set password history size to $($Config.PasswordHistorySize)."
+
 }
 
 function Set-AccountPolicy-PasswordComplexity {
@@ -100,7 +110,13 @@ Do not export or import policy. Use exactly the parameter names and the Set-InfC
         [hashtable]$Config,
         [Parameter(Mandatory)][string]$InfPath
     )
-    # TODO: Student implementation
+    function Set-AccountPolicy-PasswordComplexity {
+param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+$value = if ($Config.PasswordComplexityEnabled) { 1 } else { 0 }
+Set-InfContent -InfPath $InfPath -Pattern 'PasswordComplexity\s*=.*' -Replacement "PasswordComplexity = $value"
+Write-Host "Password complexity set to $value in INF."
+}
+
 }
 
 function Set-AccountPolicy-LockoutThreshold {
@@ -113,7 +129,8 @@ Set "Account lockout threshold" (bad logon attempts) to $Config.LockoutThreshold
 Make it a simple one-liner style solution and print a confirmation."
 #>
     param([hashtable]$Config)
-    # TODO
+    net accounts /lockoutthreshold:$($Config.LockoutThreshold) | Out-Null; Write-Host "Set account lockout threshold to $($Config.LockoutThreshold)."
+
 }
 
 function Set-AccountPolicy-LockoutDuration {
@@ -126,7 +143,8 @@ Set "Account lockout duration" to $Config.LockoutDurationMinutes (minutes).
 Keep it concise and print a one-line confirmation."
 #>
     param([hashtable]$Config)
-    # TODO
+    net accounts /lockoutduration:$($Config.LockoutDurationMinutes) | Out-Null; Write-Host "Set account lockout duration to $($Config.LockoutDurationMinutes) minutes."
+
 }
 
 function Set-AccountPolicy-ResetLockoutCounter {
@@ -139,7 +157,8 @@ Set "Reset account lockout counter after" to $Config.ResetLockoutCounterMinutes 
 $Config.ResetLockoutCounterMinutes. Keep it short and print a one-line confirmation."
 #>
     param([hashtable]$Config)
-    # TODO
+    net accounts /lockoutwindow:$($Config.ResetLockoutCounterMinutes) | Out-Null; Write-Host "Set reset account lockout counter after $($Config.ResetLockoutCounterMinutes) minutes."
+
 }
 
 function Set-AccountPolicy-StoreReversibleEncryption {
@@ -161,6 +180,12 @@ function Set-AccountPolicy-StoreReversibleEncryption {
 
 Do not export or import policy here.
 #>
-    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
-    # TODO: Student implementation
+    
+    function Set-AccountPolicy-StoreReversibleEncryption {
+param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+$value = if ($Config.StorePasswordsUsingReversibleEncryptionEnabled) { 1 } else { 0 }
+Set-InfContent -InfPath $InfPath -Pattern '(?m)^\s*ClearTextPassword\s*=\s*\d+\s*$' -Replacement "ClearTextPassword = $value"
+Write-Host "Store passwords using reversible encryption set to $value in INF."
+}
+
 }
