@@ -1,5 +1,5 @@
 # includes\10-ProhibitedFiles.ps1
-# Prohibited Files – STUBS ONLY (no working commands included)
+# Prohibited Files ï¿½ STUBS ONLY (no working commands included)
 
 function Invoke-ProhibitedFiles {
     param([hashtable]$Config)
@@ -44,5 +44,20 @@ Constraints:
 
 #>
     param([hashtable]$Config)
-    # TODO
+    if (-not $Config.ProhibitedExtensions -or $Config.ProhibitedExtensions.Count -eq 0) {
+Write-Host "No prohibited extensions configured."
+return
+}
+foreach ($ext in $Config.ProhibitedExtensions) {
+Write-Host "Searching for files with extension $ext in C:..."
+try {
+$files = Get-ChildItem -Path C:\ -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -eq $ext }
+foreach ($file in $files) {
+try {
+Write-Host "Removing file: $($file.FullName)"
+Remove-Item -Path $file.FullName -Force -ErrorAction SilentlyContinue
+} catch {}
+}
+} catch {}
+}
 }

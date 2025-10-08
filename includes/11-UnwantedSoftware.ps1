@@ -1,5 +1,5 @@
-# includes\11-UnwantedSoftware.ps1
-# Unwanted Software – PROVIDED SOLUTION
+ n# includes\11-UnwantedSoftware.ps1
+# Unwanted Software ï¿½ PROVIDED SOLUTION
 
 function Invoke-UnwantedSoftware {
     param([hashtable]$Config)
