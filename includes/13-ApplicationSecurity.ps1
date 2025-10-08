@@ -158,7 +158,8 @@ if ($rule) {
 
 Write-Log "Secure RDP baseline enforcement complete."
 
-function Secure-SMB {
+    function Write-Log{param([string]$m,[string]$l='INFO');$ts=(Get-Date).ToString('yyyy-MM-dd HH:mm:ss');$ln="$ts [$l] $m";Write-Verbose $ln;if(!(Test-Path(Split-Path$LogPath))){New-Item -ItemType Directory -Path(Split-Path$LogPath) -Force|Out-Null};Add-Content $LogPath $ln}
+ {
 <#
 .EXPLANATION
 Disable SMBv1, enforce SMB signing, and tighten guest/anonymous access.
