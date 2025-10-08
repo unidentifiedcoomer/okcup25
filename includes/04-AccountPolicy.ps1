@@ -106,10 +106,8 @@ function Set-AccountPolicy-PasswordComplexity {
 Do not export or import policy. Use exactly the parameter names and the Set-InfContent call shown. Output nothing else.
 
 #>
-    param(
-        [hashtable]$Config,
-        [Parameter(Mandatory)][string]$InfPath
-    )
+    
+    
     function Set-AccountPolicy-PasswordComplexity {
 param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
 $value = if ($Config.PasswordComplexityEnabled) { 1 } else { 0 }
