@@ -90,8 +90,7 @@ foreach ($path in $Policies.Keys) {
 }
 Write-Log "Security policy enforcement complete."
 
-    function Write-Log{param([string]$m,[string]$l='INFO');$ts=(Get-Date).ToString('yyyy-MM-dd HH:mm:ss');$ln="$ts [$l] $m";Write-Verbose $ln;if(!(Test-Path(Split-Path$LogPath))){New-Item -ItemType Directory -Path(Split-Path$LogPath) -Force|Out-Null};Add-Content $LogPath $ln}
- {
+function Secure-RDP {
 <#
 .EXPLANATION
 Harden RDP: NLA required, strong encryption, disable clipboard/device redirection where appropriate.
