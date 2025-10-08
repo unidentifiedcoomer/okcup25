@@ -142,5 +142,31 @@ Enumerate all members of the local group **'Device Owners'** and **remove them w
 Handle user and group principals gracefully; ignore not-found errors and continue. Print a brief summary."
 #>
     param([hashtable]$Config)
-    # TODO
+    # List and remove all members of local group "Device Owners"
+try {
+    $group = Get-LocalGroup -Name 'Device Owners' -ErrorAction Stop
+    $members = Get-LocalGroupMember -Group $group.Name -ErrorAction SilentlyContinue
+} catch {
+    Write-Host "Group 'Device Owners' not found."
+    return
+}
+
+if (-not $members) {
+    Write-Host "No members found in 'Device Owners'."
+    return
+}
+
+$removed = 0
+foreach ($m in $members) {
+    try {
+        Remove-LocalGroupMember -Group $group.Name -Member $m.Name -ErrorAction Stop
+        Write-Host "Removed: $($m.Name)"
+        $removed++
+    } catch {
+        Write-Host "Skipped: $($m.Name) (not found or error)"
+    }
+}
+
+Write-Host "Summary: Removed $removed of $($members.Count) members from 'Device Owners'."
+
 }

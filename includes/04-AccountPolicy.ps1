@@ -35,7 +35,14 @@ on the local machine. Keep it simple for a scripting class (no idempotence, no -
 Use a built-in tool or policy method appropriate for local policy, and emit a one-line confirmation."
 #>
     param([hashtable]$Config)
-    # TODO: Student implementation goes here
+    # Set Windows "Minimum password length" using value from $Config.MinPasswordLength
+$MinLength = $Config.MinPasswordLength
+secedit /export /cfg "$env:TEMP\secpol.cfg" > $null
+(Get-Content "$env:TEMP\secpol.cfg") -replace '^MinimumPasswordLength\s*=\s*\d+', "MinimumPasswordLength = $MinLength" |
+    Set-Content "$env:TEMP\secpol.cfg"
+secedit /configure /db "$env:TEMP\secpol.sdb" /cfg "$env:TEMP\secpol.cfg" /quiet
+Write-Host "Set minimum password length to $MinLength."
+
 }
 
 function Set-AccountPolicy-MaxPasswordAge {
@@ -48,7 +55,8 @@ Set "Maximum password age (days)" to $Config.MaxPasswordAgeDays.
 Prefer a straightforward single-line approach and print a short confirmation."
 #>
     param([hashtable]$Config)
-    # TODO
+    net accounts /maxpwage:$($Config.MaxPasswordAgeDays) | Out-Null; Write-Host "Set maximum password age to $($Config.MaxPasswordAgeDays) days."
+
 }
 
 function Set-AccountPolicy-MinPasswordAge {
