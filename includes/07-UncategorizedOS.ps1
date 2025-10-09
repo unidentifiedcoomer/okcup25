@@ -16,6 +16,10 @@ function Invoke-UncategorizedOS {
 
 function UOS-Disable-FileSharing {
 param([hashtable]$Config)
+if ($serverSvc -and $serverSvc.Status -ne 'Running') {
+    Start-Service -Name LanmanServer
+    Set-Service -Name LanmanServer -StartupType Automatic
+}
 Get-SmbShare | Remove-SmbShare -Confirm:$false -ErrorAction SilentlyContinue
 Write-Host "All SMB shares removed."
 }
@@ -35,11 +39,9 @@ param([hashtable]$Config)
 Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Remote Assistance' -Name 'fAllowToGetHelp' -Value 0
 Write-Host "Remote Assistance disabled."
 }
-
-
 function UOS-Set-ExecutionPolicy-Restricted {
 param([hashtable]$Config)
-Set-ExecutionPolicy Restricted -Force
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Restricted -Force
 Write-Host "Execution policy set to Restricted."
 }
 
