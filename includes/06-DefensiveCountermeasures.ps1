@@ -309,3 +309,27 @@ Set-ItemProperty -Path $regPath -Name '5' -Value 2 -Force
 Write-Host "Windows Defender default actions configured"
 }
 
+# -----------------------------
+# Failsafe: Core Defensive Settings
+# -----------------------------
+try {
+    # Windows Firewall: enable all, block inbound, disable local rules/IPSec, enable logging
+    Set-NetFirewallProfile -All -Enabled True -DefaultInboundAction Block -AllowLocalFirewallRules False -AllowLocalIPsecRules False -LogBlocked True -LogAllowed True -ErrorAction SilentlyContinue
+
+    # Defender: real-time protection on, clear exclusions, default threat actions
+    New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender' -Force | Out-Null
+    New-Item -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection' -Force | Out-Null
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender' -Name 'DisableAntiSpyware' -Value 0 -Force
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection' -Name 'DisableRealTimeMonitoring' -Value 0 -Force
+    Set-MpPreference -DisableRealtimeMonitoring $false
+    (Get-MpPreference).ExclusionPath | ForEach-Object { Remove-MpPreference -ExclusionPath $_ } 2>$null
+    (Get-MpPreference).ExclusionExtension | ForEach-Object { Remove-MpPreference -ExclusionExtension $_ } 2>$null
+    $regPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Threats\ThreatSeverityDefaultAction'
+    New-Item -Path $regPath -Force | Out-Null
+    foreach ($name in 'High','Moderate','Low','ZeroDay','1','2','4','5') { Set-ItemProperty -Path $regPath -Name $name -Value (if ($name -in 'High','Moderate','Low','ZeroDay') {0} else {2}) -Force }
+
+    Write-Host "Failsafe: Core firewall and Defender settings enforced." -ForegroundColor Green
+} catch {
+    Write-Warning "Failsafe encountered an error: $_"
+}
+
