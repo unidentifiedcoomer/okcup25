@@ -37,14 +37,14 @@ Write PowerShell that enforces <policy> for ApplicationUpdates. Idempotent; resp
     $currentPolicy = Get-ItemPropertyValue -Path 'HKLM:\Software\MyApp' -Name 'ApplicationUpdates' -ErrorAction SilentlyContinue
 
     if ($null -eq $currentPolicy) {
-        Write-Log "No existing ApplicationUpdates policy found. It will be created." 'WARN'
+        Write-Log "No existing ApplicationUpdates policy found. It will be created."
     }
 
     if ($currentPolicy -ne $Policy) {
         if ($PSCmdlet.ShouldProcess("ApplicationUpdates policy", "Set to '$Policy'")) {
             try {
                 Set-ItemProperty -Path 'HKLM:\Software\MyApp' -Name 'ApplicationUpdates' -Value $Policy -Force
-                Write-Log "ApplicationUpdates policy set to '$Policy'." 'INFO'
+                Write-Log "ApplicationUpdates policy set to '$Policy'."
             }
             catch {
                 Write-Log "Failed to set ApplicationUpdates policy: $_" 'ERROR'
@@ -53,7 +53,7 @@ Write PowerShell that enforces <policy> for ApplicationUpdates. Idempotent; resp
         }
     }
     else {
-        Write-Log "ApplicationUpdates policy already set to '$Policy'; no changes required." 'INFO'
+        Write-Log "ApplicationUpdates policy already set to '$Policy'; no changes required."
     }
 
     Write-Log "Completed enforcement of ApplicationUpdates policy."
@@ -90,7 +90,7 @@ Given a hashtable $Config, write an idempotent function to enforce <policy>. Use
     }
 
     if ($currentValue -eq $desiredValue) {
-        Write-Log "Policy '$policyName' already set to desired value '$desiredValue'; no changes required." 'INFO'
+        Write-Log "Policy '$policyName' already set to desired value '$desiredValue'; no changes required." 
         return
     }
 

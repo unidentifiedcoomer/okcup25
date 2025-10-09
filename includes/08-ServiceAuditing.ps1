@@ -1,5 +1,5 @@
 # includes\08-ServiceAuditing.ps1
-# Service Auditing – STUBS ONLY (no working commands included)
+# Service Auditing ï¿½ STUBS ONLY (no working commands included)
 
 function Invoke-ServiceAuditing {
     param([hashtable]$Config)
@@ -29,7 +29,29 @@ function SA-Ensure-WindowsDefenderRunning {
 }
 #>
     param([hashtable]$Config)
-    # TODO
+     $serviceName = "WinDefend"
+  $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+
+  if (-not $service) {
+    Write-Log "Windows Defender service '$serviceName' not found." 'ERROR' -Config $Config
+    return
+  }
+
+  if ($PSCmdlet.ShouldProcess($serviceName, "Ensure running and set to Automatic")) {
+    if ($service.StartType -ne 'Automatic') {
+      Set-Service -Name $serviceName -StartupType Automatic -WhatIf:$WhatIfPreference
+      Write-Log "Set $serviceName startup type to Automatic." 'INFO' -Config $Config
+    } else {
+      Write-Log "$serviceName startup type already Automatic." 'INFO' -Config $Config
+    }
+
+    if ($service.Status -ne 'Running') {
+      Start-Service -Name $serviceName -WhatIf:$WhatIfPreference
+      Write-Log "Started $serviceName service." 'INFO' -Config $Config
+    } else {
+      Write-Log "$serviceName service already running." 'INFO' -Config $Config
+    }
+  }
 }
 
 function SA-Ensure-EventLogRunning {
@@ -47,7 +69,30 @@ function SA-Ensure-EventLogRunning {
 }
 #>
     param([hashtable]$Config)
-    # TODO
+    $serviceName = "EventLog"
+$service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+
+if (-not $service) {
+    Write-Log -Message "Event Log service '$serviceName' not found." -Level 'ERROR' -Config $Config
+    return
+}
+
+if ($PSCmdlet.ShouldProcess($serviceName, "Ensure running and set to Automatic")) {
+    if ($service.StartType -ne 'Automatic') {
+        Set-Service -Name $serviceName -StartupType Automatic
+        Write-Log -Message "Set $serviceName startup type to Automatic." -Level 'INFO' -Config $Config
+    } else {
+        Write-Log -Message "$serviceName startup type already Automatic." -Level 'INFO' -Config $Config
+    }
+
+    if ($service.Status -ne 'Running') {
+        Start-Service -Name $serviceName
+        Write-Log -Message "Started $serviceName service." -Level 'INFO' -Config $Config
+    } else {
+        Write-Log -Message "$serviceName service already running." -Level 'INFO' -Config $Config
+    }
+}
+
 }
 
 function SA-Disable-ServicesList {
@@ -80,5 +125,44 @@ function SA-Disable-ServicesList {
 }
 #>
     param([hashtable]$Config)
-    # TODO
+   $services = $Config.ServicesToDisable
+if (-not $services -or -not $services.Count) {
+    Write-Log -Message "No services configured to disable." -Level 'WARN' -Config $Config
+    return
+}
+
+foreach ($service in $services) {
+    $svc = Get-Service -Name $service -ErrorAction SilentlyContinue
+    if (-not $svc) {
+        Write-Log -Message "Service '$service' not found." -Level 'WARN' -Config $Config
+        continue
+    }
+
+    if ($PSCmdlet.ShouldProcess($service, "Stop service")) {
+        if ($svc.Status -ne 'Stopped') {
+            try {
+                Stop-Service -Name $service -Force
+                Write-Log -Message "Stopped service: $service" -Level 'INFO' -Config $Config
+            } catch {
+                Write-Log -Message "Failed to stop service: $service. Error: $_" -Level 'ERROR' -Config $Config
+            }
+        } else {
+            Write-Log -Message "Service '$service' already stopped." -Level 'INFO' -Config $Config
+        }
+    }
+
+    if ($PSCmdlet.ShouldProcess($service, "Disable service")) {
+        if ($svc.StartType -ne 'Disabled') {
+            try {
+                Set-Service -Name $service -StartupType Disabled
+                Write-Log -Message "Set service to Disabled: $service" -Level 'INFO' -Config $Config
+            } catch {
+                Write-Log -Message "Failed to disable service: $service. Error: $_" -Level 'ERROR' -Config $Config
+            }
+        } else {
+            Write-Log -Message "Service '$service' already Disabled." -Level 'INFO' -Config $Config
+        }
+    }
+}
+
 }
