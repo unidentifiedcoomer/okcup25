@@ -335,23 +335,9 @@ function LP-SecOpt-RestrictFloppyToLocal {
 
 
 function LP-SecOpt-RequireStrongKey {
-<#
-.EXPLANATION
-Domain member: Digitally encrypt or sign secure channel data (always) → Enabled (RequireStrongKey = 1).
-
-.AI_PROMPT
-Return only PowerShell code:
-
-function LP-SecOpt-RequireStrongKey {
   param([hashtable]$Config)
   Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters' -Name 'RequireStrongKey' -Value 1 -Force
   Write-Host 'RequireStrongKey set to 1.'
-}
-#>
-    function LP-SecOpt-RequireStrongKey {
-    param([hashtable]$Config)
-    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters' -Name 'RequireStrongKey' -Value 1 -Force
-    Write-Host 'RequireStrongKey set to 1.'
 }
 
 

@@ -84,7 +84,6 @@ Install NuGet provider and PSWindowsUpdate module; set execution policy (per you
   Import-Module PSWindowsUpdate -Force
   Write-Host "PSWindowsUpdate installed and imported."
 }
-```
 
 
 
