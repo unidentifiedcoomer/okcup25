@@ -28,6 +28,7 @@ function SA-Ensure-WindowsDefenderRunning {
   Write-Host "Windows Defender service set to Automatic and started."
 }
 #>
+[CmdletBinding(SupportsShouldProcess = $true)]
     param([hashtable]$Config)
      $serviceName = "WinDefend"
   $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
@@ -68,6 +69,7 @@ function SA-Ensure-EventLogRunning {
   Write-Host "Windows Event Log service set to Automatic and started."
 }
 #>
+[CmdletBinding(SupportsShouldProcess = $true)]
     param([hashtable]$Config)
     $serviceName = "EventLog"
 $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
@@ -76,7 +78,6 @@ if (-not $service) {
     Write-Log -Message "Event Log service '$serviceName' not found." -Level 'ERROR' -Config $Config
     return
 }
-
 if ($PSCmdlet.ShouldProcess($serviceName, "Ensure running and set to Automatic")) {
     if ($service.StartType -ne 'Automatic') {
         Set-Service -Name $serviceName -StartupType Automatic
@@ -124,6 +125,7 @@ function SA-Disable-ServicesList {
   }
 }
 #>
+[CmdletBinding(SupportsShouldProcess = $true)]
     param([hashtable]$Config)
    $services = $Config.ServicesToDisable
 if (-not $services -or -not $services.Count) {
@@ -137,7 +139,6 @@ foreach ($service in $services) {
         Write-Log -Message "Service '$service' not found." -Level 'WARN' -Config $Config
         continue
     }
-
     if ($PSCmdlet.ShouldProcess($service, "Stop service")) {
         if ($svc.Status -ne 'Stopped') {
             try {
