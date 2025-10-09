@@ -18,6 +18,7 @@ function UOS-Disable-FileSharing {
 param([hashtable]$Config)
 $serverSvc = Get-Service -Name LanmanServer -ErrorAction SilentlyContinue
 if ($serverSvc -and $serverSvc.Status -ne 'Running') {
+    Get-Service -Name LanmanServer | Select-Object Status, StartType
     Start-Service -Name LanmanServer
     Set-Service -Name LanmanServer -StartupType Automatic
 }
