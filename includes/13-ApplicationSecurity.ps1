@@ -84,4 +84,4 @@ Check if IIS roles/features are present; enforce minimal secure baseline with id
     param([hashtable]$Config, [switch]$WhatIf, [switch]$Verbose)
     }
 
-    Write-Log "Completed IIS baseline enforcement." 'INFO'
+    Write-Log "Completed IIS baseline enforcement." 
