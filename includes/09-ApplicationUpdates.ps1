@@ -8,11 +8,6 @@ function Invoke-ApplicationUpdates {
     # Example:
     # Set-ApplicationUpdates-Setting1 -Config $Config -WhatIf:$Config.WhatIf -Verbose:$Config.Verbose
     # Set-ApplicationUpdates-Setting2 -Config $Config -WhatIf:$Config.WhatIf -Verbose:$Config.Verbose
-Set-ApplicationUpdates-CheckFrequency -Config $Config -WhatIf:$Config.WhatIf -Verbose:$Config.Verbose
-Set-ApplicationUpdates-InstallMode    -Config $Config -WhatIf:$Config.WhatIf -Verbose:$Config.Verbose
-Set-ApplicationUpdates-NotifyLevel    -Config $Config -WhatIf:$Config.WhatIf -Verbose:$Config.Verbose
-Set-ApplicationUpdates-SourceControl  -Config $Config -WhatIf:$Config.WhatIf -Verbose:$Config.Verbose
-Set-ApplicationUpdates-RollbackPolicy -Config $Config -WhatIf:$Config.WhatIf -Verbose:$Config.Verbose 
     if ($Config.Verbose) { Write-Host "[ApplicationUpdates] Complete." -ForegroundColor Cyan }
 }
 
