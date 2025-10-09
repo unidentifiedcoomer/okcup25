@@ -16,6 +16,7 @@ function Invoke-UncategorizedOS {
 
 function UOS-Disable-FileSharing {
 param([hashtable]$Config)
+$serverSvc = Get-Service -Name LanmanServer -ErrorAction SilentlyContinue
 if ($serverSvc -and $serverSvc.Status -ne 'Running') {
     Start-Service -Name LanmanServer
     Set-Service -Name LanmanServer -StartupType Automatic
