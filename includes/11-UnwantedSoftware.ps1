@@ -1,4 +1,4 @@
- n# includes\11-UnwantedSoftware.ps1
+# includes\11-UnwantedSoftware.ps1
 # Unwanted Software � PROVIDED SOLUTION
 
 function Invoke-UnwantedSoftware {
