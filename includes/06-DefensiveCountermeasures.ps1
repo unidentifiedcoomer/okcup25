@@ -48,7 +48,7 @@ Set default inbound action to Block for all profiles.
 #>
 
 param([hashtable]$Config)
-Set-NetFirewallProfile -All -
+Set-NetFirewallProfile -All
 
 }
 
