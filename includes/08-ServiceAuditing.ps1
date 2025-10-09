@@ -155,7 +155,7 @@ foreach ($service in $services) {
     if ($PSCmdlet.ShouldProcess($service, "Disable service")) {
         if ($svc.StartType -ne 'Disabled') {
             try {
-                Set-Service -Name $service -StartupType Disabled
+                Set-Service -InputObject $svc -StartupType Disabled
                 Write-Log -Message "Set service to Disabled: $service" -Level 'INFO' -Config $Config
             } catch {
                 Write-Log -Message "Failed to disable service: $service. Error: $_" -Level 'ERROR' -Config $Config
