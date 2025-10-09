@@ -228,14 +228,62 @@ If IIS present, harden protocol/cipher suites and request filtering.
 .AI_PROMPT
 Check if IIS roles/features are present; enforce minimal secure baseline with idempotence; -WhatIf/-Verbose; Write-Log.
 #>
-    param([hashtable]$Config, [switch]$WhatIf, [switch]$Verbose)
-    $roles=@("Web-Server","Web-WebServer","Web-Common-Http","Web-Static-Content","Web-Default-Doc","Web-Http-Errors","Web-Http-Redirect","Web-Health","Web-Http-Logging","Web-Request-Monitor","Web-Performance","Web-Stat-Compression","Web-Security","Web-Filtering","Web-Windows-Auth")
-$installed=Get-WindowsFeature|Where-Object{$_.InstallState -eq"Installed"}
-if(-not($installed|Where-Object Name -eq"Web-Server")){Write-Log"IIS not installed; baseline skipped" "WARN";return}
-foreach($r in$roles){$f=Get-WindowsFeature -Name$r;if($f.InstallState -ne"Installed"){if($PSCmdlet.ShouldProcess($r,"Enable IIS role/feature")){Install-WindowsFeature -Name$r -IncludeManagementTools|Out-Null;Write-Log"Enabled IIS feature $r"}}else{Write-Log"$r already installed"}}
-$settings=@{"HKLM:\SYSTEM\CurrentControlSet\Services\W3SVC\Parameters"=@{"MaxConnections"=1000;"MaxKeepAliveRequests"=100;"ConnectionTimeout"=120}}
-foreach($path in$settings.Keys){foreach($name in$settings[$path].Keys){$desired=$settings[$path][$name];$current=(Get-ItemProperty -Path$path -Name$name -ErrorAction SilentlyContinue).$name;if($current -ne$desired){if($PSCmdlet.ShouldProcess("$path\$name","Set to $desired")){Set-ItemProperty -Path$path -Name$name -Value$desired -Force;Write-Log"Set $path\$name=$desired"}}else{Write-Log"$path\$name already=$desired"}}}
-$appCmd="$env:SystemRoot\System32\inetsrv\appcmd.exe"
-if(Test-Path$appCmd){if($PSCmdlet.ShouldProcess("IIS Request Filtering","Apply secure defaults")){&$appCmd set config /section:requestFiltering /requestLimits.maxAllowedContentLength:30000000;Write-Log"Applied request filtering limit"}}
-Write-Log"IIS baseline enforcement complete"
-}
+ [ValidateSet('INFO','WARN','ERROR')][string]$Level='INFO'
+        
+        $timestamp = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
+        $entry = "[$timestamp] [$Level] $Message"
+        Write-Verbose $entry
+        Add-Content -Path $Config.LogPath -Value $entry
+    }
+
+    Write-Log "Starting IIS baseline enforcement." 'INFO'
+
+    $requiredFeatures = @(
+        'Web-Server',
+        'Web-Common-Http',
+        'Web-Static-Content',
+        'Web-Default-Doc',
+        'Web-Http-Errors',
+        'Web-Request-Monitor',
+        'Web-Filtering'
+    )
+
+    $prohibitedFeatures = @(
+        'Web-FTP-Server',
+        'Web-DAV-Publishing',
+        'Web-WebSockets'
+    )
+
+    foreach ($feature in $requiredFeatures) {
+        $featureState = Get-WindowsFeature -Name $feature
+        if (-not $featureState.Installed) {
+            if ($PSCmdlet.ShouldProcess("IIS Feature: $feature", "Install")) {
+                try {
+                    Install-WindowsFeature -Name $feature -IncludeManagementTools | Out-Null
+                    Write-Log "Installed required IIS feature: $feature." 'INFO'
+                } catch {
+                    Write-Log "Failed to install IIS feature: $feature - $_" 'ERROR'
+                }
+            }
+        } else {
+            Write-Log "IIS feature '$feature' already installed." 'INFO'
+        }
+    }
+
+    foreach ($feature in $prohibitedFeatures) {
+        $featureState = Get-WindowsFeature -Name $feature
+        if ($featureState.Installed) {
+            if ($PSCmdlet.ShouldProcess("IIS Feature: $feature", "Remove")) {
+                try {
+                    Remove-WindowsFeature -Name $feature | Out-Null
+                    Write-Log "Removed insecure IIS feature: $feature." 'WARN'
+                } catch {
+                    Write-Log "Failed to remove IIS feature: $feature - $_" 'ERROR'
+                }
+            }
+        } else {
+            Write-Log "IIS feature '$feature' not installed (as expected)." 'INFO'
+        }
+    }
+
+    Write-Log "Completed IIS baseline enforcement." 'INFO'
