@@ -94,8 +94,31 @@ Trigger installation of available updates using PSWindowsUpdate with force flags
 #>
     param([hashtable]$Config)
     
-  Install-WindowsUpdate -ForceDownload -ForceInstall -Confirm:$False
-  Write-Host "Windows updates installation initiated."
+ function OSU-Run-WindowsUpdate {
+<#
+.EXPLANATION
+Trigger installation of available updates using PSWindowsUpdate with force flags,
+but skip feature updates for 24H2 and 25H2.
+#>
+    param([hashtable]$Config)
+    
+    # Get all available updates
+    $updates = Get-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot
+
+    # Filter out 24H2 and 25H2 feature updates
+    $updatesToInstall = $updates | Where-Object { 
+        $_.Title -notmatch '24H2|25H2'
+    }
+
+    if ($updatesToInstall.Count -eq 0) {
+        Write-Host "No applicable updates to install (skipped 24H2/25H2 feature updates)."
+        return
+    }
+
+    # Install the filtered updates
+    $updatesToInstall | Install-WindowsUpdate -ForceDownload -ForceInstall -Confirm:$False
+    Write-Host "Windows updates installation initiated (excluding 24H2/25H2 feature updates)."
 }
 
+}
 
