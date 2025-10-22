@@ -170,3 +170,39 @@ foreach ($m in $members) {
 Write-Host "Summary: Removed $removed of $($members.Count) members from 'Device Owners'."
 
 }
+# --- Final step: Enumerate all Administrators ---
+function Show-AdministratorsSummary {
+    Write-Host "`n[Summary] Current local Administrators:" -ForegroundColor Cyan
+    try {
+        $admins = Get-LocalGroupMember -Group 'Administrators'
+        if ($admins) {
+            foreach ($admin in $admins) {
+                Write-Host " - $($admin.Name)"
+            }
+        } else {
+            Write-Host "No members found in Administrators group."
+        }
+    } catch {
+        Write-Host "Error listing Administrators: $_" -ForegroundColor Red
+    }
+    Write-Host "[Summary] End" -ForegroundColor Cyan
+}
+
+# Call the summary after all user auditing actions
+function Invoke-UserAuditing {
+    param([hashtable]$Config)
+
+    Write-Host "[User Auditing] Start" -ForegroundColor Cyan
+
+    Prompt-DisableEnabledLocalUsers          -Config $Config
+    Prompt-RemoveAdministratorsMembers       -Config $Config
+    Set-AllLocalPasswordsToTempAndExpire     -Config $Config
+    Rename-BuiltinAdministrator              -Config $Config
+    Rename-BuiltinGuest                      -Config $Config
+    Remove-AllDeviceOwnersMembersNoPrompt    -Config $Config
+
+    Write-Host "[User Auditing] Done" -ForegroundColor Cyan
+
+    # Show final summary of Administrators
+    Show-AdministratorsSummary
+}
