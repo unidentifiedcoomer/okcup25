@@ -127,6 +127,8 @@ Set "Account lockout threshold" (bad logon attempts) to $Config.LockoutThreshold
 Make it a simple one-liner style solution and print a confirmation."
 #>
     param([hashtable]$Config)
+    $Config = @{ LockoutThreshold = 5 }
+Set-AccountLockoutThreshold -Config $Config
     net accounts /lockoutthreshold:$($Config.LockoutThreshold) | Out-Null; Write-Host "Set account lockout threshold to $($Config.LockoutThreshold)."
 
 }
