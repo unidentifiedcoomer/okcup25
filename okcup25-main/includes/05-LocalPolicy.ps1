@@ -1,0 +1,281 @@
+﻿# includes\05-LocalPolicy.ps1
+# Local Policy – User Rights Assignment (stubs only; uses Export-LocalSecurityPolicy / Set-InfContent / Import-LocalSecurityPolicy)
+
+function Invoke-LocalPolicy {
+    param([hashtable]$Config)
+
+    Write-Host "[Local Policy] Start" -ForegroundColor Cyan
+
+    # 1) Export once
+    $inf = Export-LocalSecurityPolicy
+
+    # 2) Student tasks edit the SAME $inf
+    LP-Disable-CredManTrustedCaller              -Config $Config -InfPath $inf
+    LP-Remove-Everyone-From-Delegation           -Config $Config -InfPath $inf
+    LP-Remove-Everyone-From-NetworkLogonRight    -Config $Config -InfPath $inf
+    LP-Restrict-CreateGlobalObjects              -Config $Config -InfPath $inf
+    LP-Deny-NetworkLogon-Include-Guest           -Config $Config -InfPath $inf
+    LP-Restrict-RemoteShutdown                   -Config $Config -InfPath $inf
+    LP-Restrict-LoadDriverPrivilege              -Config $Config -InfPath $inf
+    LP-Restrict-ManageSecurityLog                -Config $Config -InfPath $inf
+    LP-Restrict-TakeOwnership                    -Config $Config -InfPath $inf
+    
+    # 2b) Auditing (does not use INF)
+    LP-Enable-AllAuditPolicy                     -Config $Config
+
+    # 2c) Security Options (registry-based)
+    LP-SecOpt-LimitBlankPasswordsConsoleOnly     -Config $Config
+    LP-SecOpt-PreventPrinterDriverInstall        -Config $Config
+    LP-SecOpt-RestrictCDROMToLocal               -Config $Config
+    LP-SecOpt-RestrictFloppyToLocal              -Config $Config
+    LP-SecOpt-RequireStrongKey                   -Config $Config
+    LP-SecOpt-DoNotDisplayLastUser               -Config $Config
+    LP-SecOpt-DisableCtrlAltDelRequirement       -Config $Config
+    LP-SecOpt-SetLegalNoticeText                 -Config $Config
+    LP-SecOpt-ClientRequireSMBSigning            -Config $Config
+    LP-SecOpt-ClientDisablePlainTextPassword     -Config $Config
+    LP-SecOpt-ServerRequireSMBSigning            -Config $Config
+    LP-SecOpt-ServerEnableSMBSigningIfAgreed     -Config $Config
+    LP-SecOpt-RestrictAnonymousSamAndShares      -Config $Config
+    LP-SecOpt-DisableEveryoneIncludesAnonymous   -Config $Config
+    LP-SecOpt-RestrictNullSessionAccess          -Config $Config
+    LP-SecOpt-NullSessionSharesNone              -Config $Config
+    LP-SecOpt-DoNotStoreLMHash                   -Config $Config
+    LP-SecOpt-RecoveryConsoleNoAutoAdminLogon    -Config $Config
+    LP-SecOpt-DisableShutdownWithoutLogon        -Config $Config
+    LP-SecOpt-ClearPagefileAtShutdown            -Config $Config
+    LP-SecOpt-UAC-ConsentPromptBehaviorAdmin     -Config $Config
+    LP-SecOpt-UAC-DisableUIAccessNoSecureDesktop -Config $Config
+    LP-SecOpt-UAC-RunAllAdminsInAAM              -Config $Config
+    LP-SecOpt-UAC-SecureDesktopPrompt            -Config $Config
+
+    # 3) Import once (and clean up)
+    Import-LocalSecurityPolicy -InfPath $inf -Cleanup
+    Write-Host "[Local Policy] Done" -ForegroundColor Cyan
+}
+
+function LP-Disable-CredManTrustedCaller {
+    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^\s*SeTrustedCredManAccessPrivilege.*$' -Replacement 'SeTrustedCredManAccessPrivilege = *S-1-5-32-544'
+    # Optional: remove trailing whitespace
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^(SeTrustedCredManAccessPrivilege\s*=.*)\s+$' -Replacement '$1'
+    Write-Host "SeTrustedCredManAccessPrivilege restricted to Administrators in INF."
+}
+
+
+
+function LP-Remove-Everyone-From-Delegation {
+    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^\s*SeEnableDelegationPrivilege.*$' -Replacement 'SeEnableDelegationPrivilege = *S-1-5-32-544'
+    # Ensure no trailing whitespace
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^(SeEnableDelegationPrivilege\s*=.*)\s+$' -Replacement '$1'
+    Write-Host "SeEnableDelegationPrivilege set to Administrators only in INF."
+}
+
+
+
+function LP-Remove-Everyone-From-NetworkLogonRight {
+    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+    # Remove Everyone SID
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^(SeNetworkLogonRight\s*=.*?)(\*S-1-1-0,?)' -Replacement '$1'
+    # Remove any trailing comma left
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^(SeNetworkLogonRight\s*=.*?),\s*$' -Replacement '$1'
+    Write-Host "Removed Everyone from SeNetworkLogonRight in INF."
+}
+
+
+
+function LP-Restrict-CreateGlobalObjects {
+    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^\s*SeCreateGlobalPrivilege.*$' -Replacement 'SeCreateGlobalPrivilege = *S-1-5-19,*S-1-5-20,*S-1-5-32-544,*S-1-5-6'
+    Write-Host "SeCreateGlobalPrivilege restricted to service accounts and Administrators in INF."
+}
+
+
+function LP-Deny-NetworkLogon-Include-Guest {
+    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^\s*SeDenyNetworkLogonRight.*$' -Replacement 'SeDenyNetworkLogonRight = Guest'
+    Write-Host "SeDenyNetworkLogonRight set to include Guest in INF."
+}
+
+
+function LP-Restrict-RemoteShutdown {
+    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^\s*SeRemoteShutdownPrivilege.*$' -Replacement 'SeRemoteShutdownPrivilege = *S-1-5-32-544'
+    Write-Host "SeRemoteShutdownPrivilege restricted to Administrators in INF."
+}
+
+
+function LP-Restrict-LoadDriverPrivilege {
+    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^\s*SeLoadDriverPrivilege.*$' -Replacement 'SeLoadDriverPrivilege = *S-1-5-32-544'
+    Write-Host "SeLoadDriverPrivilege restricted to Administrators in INF."
+}
+
+
+function LP-Restrict-ManageSecurityLog {
+    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^\s*SeSecurityPrivilege.*$' -Replacement 'SeSecurityPrivilege = *S-1-5-32-544'
+    Write-Host "SeSecurityPrivilege restricted to Administrators in INF."
+}
+
+
+function LP-Restrict-TakeOwnership {
+    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^\s*SeTakeOwnershipPrivilege.*$' -Replacement 'SeTakeOwnershipPrivilege = *S-1-5-32-544'
+    Write-Host "SeTakeOwnershipPrivilege restricted to Administrators in INF."
+}
+
+
+function LP-Enable-AllAuditPolicy {
+    param([hashtable]$Config)
+    # Enable success and failure auditing for all categories
+    auditpol /set /category:* /failure:enable /success:enable
+    Write-Host "Advanced Audit Policy: success and failure enabled for all categories."
+}
+
+function LP-SecOpt-LimitBlankPasswordsConsoleOnly {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa' -Name 'LimitBlankPasswordUse' -Value 1 -Force
+    Write-Host 'LimitBlankPasswordUse set to 1.'
+}
+
+function LP-SecOpt-PreventPrinterDriverInstall {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Print\Providers\LanMan Print Services\Servers' -Name 'AddPrinterDrivers' -Value 1 -Force
+    Write-Host 'AddPrinterDrivers set to 1.'
+}
+
+function LP-SecOpt-RestrictCDROMToLocal {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AllocateCDRoms' -Value 1 -Force
+    Write-Host 'AllocateCDRoms set to 1.'
+}
+
+function LP-SecOpt-RestrictFloppyToLocal {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'AllocateFloppies' -Value 1 -Force
+    Write-Host 'AllocateFloppies set to 1.'
+}
+
+function LP-SecOpt-RequireStrongKey {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters' -Name 'RequireStrongKey' -Value 1 -Force
+    Write-Host 'RequireStrongKey set to 1.'
+}
+
+function LP-SecOpt-DoNotDisplayLastUser {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'DontDisplayLastUserName' -Value 1 -Force
+    Write-Host 'DontDisplayLastUserName set to 1.'
+}
+
+function LP-SecOpt-DisableCtrlAltDelRequirement {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'DisableCAD' -Value 0 -Force
+    Write-Host 'DisableCAD set to 0.'
+}
+
+function LP-SecOpt-SetLegalNoticeText {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'LegalNoticeText' -Value $Config.LegalNoticeText -Force
+    Write-Host 'LegalNoticeText updated.'
+}
+
+function LP-SecOpt-ClientRequireSMBSigning {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters' -Name 'RequireSecuritySignature' -Value 1 -Force
+    Write-Host 'Workstation RequireSecuritySignature set to 1.'
+}
+
+function LP-SecOpt-ClientDisablePlainTextPassword {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters' -Name 'EnablePlainTextPassword' -Value 0 -Force
+    Write-Host 'Workstation EnablePlainTextPassword set to 0.'
+}
+
+function LP-SecOpt-ServerRequireSMBSigning {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters' -Name 'RequireSecuritySignature' -Value 1 -Force
+    Write-Host 'Server RequireSecuritySignature set to 1.'
+}
+
+function LP-SecOpt-ServerEnableSMBSigningIfAgreed {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters' -Name 'EnableSecuritySignature' -Value 1 -Force
+    Write-Host 'Server EnableSecuritySignature set to 1.'
+}
+
+function LP-SecOpt-RestrictAnonymousSamAndShares {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa' -Name 'RestrictAnonymousSAM' -Value 1 -Force
+    Write-Host 'RestrictAnonymousSAM set to 1.'
+}
+
+function LP-SecOpt-DisableEveryoneIncludesAnonymous {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa' -Name 'EveryoneIncludesAnonymous' -Value 0 -Force
+    Write-Host 'EveryoneIncludesAnonymous set to 0.'
+}
+
+function LP-SecOpt-RestrictNullSessionAccess {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters' -Name 'RestrictNullSessAccess' -Value 1 -Force
+    Write-Host 'RestrictNullSessAccess set to 1.'
+}
+
+function LP-SecOpt-NullSessionSharesNone {
+    param([hashtable]$Config)
+    New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters' -Name 'NullSessionShares' -PropertyType MultiString -Value @() -Force | Out-Null
+    Write-Host 'NullSessionShares cleared.'
+}
+
+function LP-SecOpt-DoNotStoreLMHash {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa' -Name 'NoLMHash' -Value 1 -Force
+    Write-Host 'NoLMHash set to 1.'
+}
+
+function LP-SecOpt-RecoveryConsoleNoAutoAdminLogon {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Setup\RecoveryConsole' -Name 'SecurityLevel' -Value 0 -Force
+    Write-Host 'Recovery Console SecurityLevel set to 0.'
+}
+
+function LP-SecOpt-DisableShutdownWithoutLogon {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'ShutdownWithoutLogon' -Value 0 -Force
+    Write-Host 'ShutdownWithoutLogon set to 0.'
+}
+
+function LP-SecOpt-ClearPagefileAtShutdown {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management' -Name 'ClearPageFileAtShutdown' -Value 1 -Force
+    Write-Host 'ClearPageFileAtShutdown set to 1.'
+}
+
+function LP-SecOpt-UAC-ConsentPromptBehaviorAdmin {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'ConsentPromptBehaviorAdmin' -Value 2 -Force
+    Write-Host 'ConsentPromptBehaviorAdmin set to 2.'
+}
+
+function LP-SecOpt-UAC-DisableUIAccessNoSecureDesktop {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'EnableUIADesktopToggle' -Value 0 -Force
+    Write-Host 'EnableUIADesktopToggle set to 0.'
+}
+
+function LP-SecOpt-UAC-RunAllAdminsInAAM {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'FilterAdministratorToken' -Value 1 -Force
+    Write-Host 'FilterAdministratorToken set to 1.'
+}
+
+function LP-SecOpt-UAC-SecureDesktopPrompt {
+    param([hashtable]$Config)
+    Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name 'PromptOnSecureDesktop' -Value 1 -Force
+    Write-Host 'PromptOnSecureDesktop set to 1.'
+}
+
+
