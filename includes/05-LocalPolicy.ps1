@@ -236,6 +236,13 @@ function LP-SecOpt-DoNotStoreLMHash {
     Write-Host 'NoLMHash set to 1.'
 }
 
+function LP-Restrict-TakeOwnership {
+    param([hashtable]$Config, [Parameter(Mandatory)][string]$InfPath)
+    Set-InfContent -InfPath $InfPath -Pattern '(?mi)^\s*SeTakeOwnershipPrivilege.*$' -Replacement 'SeTakeOwnershipPrivilege = *S-1-5-32-544'
+    Write-Host "SeTakeOwnershipPrivilege restricted to Administrators in INF."
+}
+
+
 function LP-SecOpt-RecoveryConsoleNoAutoAdminLogon {
     param([hashtable]$Config)
     Set-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Setup\RecoveryConsole' -Name 'SecurityLevel' -Value 0 -Force
